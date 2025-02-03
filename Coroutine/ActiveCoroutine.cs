@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -9,9 +10,10 @@ namespace Coroutine {
     /// </summary>
     public class ActiveCoroutine : IComparable<ActiveCoroutine> {
 
-        private readonly IEnumerator<Wait> enumerator;
+        private readonly IEnumerator enumerator;
         private readonly Stopwatch stopwatch;
         private Wait current;
+        private readonly Stack<IEnumerator> coroutineStack = new Stack<IEnumerator>();
 
         internal Event Event => this.current.Event;
         internal bool IsWaitingForEvent => this.Event != null;
@@ -57,8 +59,9 @@ namespace Coroutine {
         /// </summary>
         public readonly int Priority;
 
-        internal ActiveCoroutine(IEnumerator<Wait> enumerator, string name, int priority, Stopwatch stopwatch) {
+        internal ActiveCoroutine(IEnumerator enumerator, string name, int priority, Stopwatch stopwatch) {
             this.enumerator = enumerator;
+            this.coroutineStack.Push(enumerator); // Add the initial coroutine
             this.Name = name;
             this.Priority = priority;
             this.stopwatch = stopwatch;
@@ -91,19 +94,43 @@ namespace Coroutine {
 
         internal bool MoveNext() {
             this.stopwatch.Restart();
-            var result = this.enumerator.MoveNext();
-            this.stopwatch.Stop();
-            this.LastMoveNextTime = this.stopwatch.Elapsed;
-            this.TotalMoveNextTime += this.stopwatch.Elapsed;
-            this.MoveNextCount++;
+            while (coroutineStack.Count > 0)
+            {
+                var currentEnumerator = coroutineStack.Peek();
+                var result = currentEnumerator.MoveNext();
+                this.stopwatch.Stop();
+                this.LastMoveNextTime = this.stopwatch.Elapsed;
+                this.TotalMoveNextTime += this.stopwatch.Elapsed;
+                this.MoveNextCount++;
 
-            if (!result) {
-                this.IsFinished = true;
-                this.OnFinished?.Invoke(this);
-                return false;
+                if (!result)
+                {
+                    coroutineStack.Pop(); // Nested coroutine finished
+                    continue;
+                }
+                var currentYield = currentEnumerator.Current;
+
+                // Handle nested coroutine
+                if (currentYield is IEnumerator nestedCoroutine)
+                {
+                    coroutineStack.Push(nestedCoroutine);
+                    continue;
+                }
+
+                // Handle Wait
+                if (currentYield is Wait wait)
+                {
+                    this.current = wait;
+                    return true;
+                }
+
+                // If the yield is neither, skip (or handle as needed)
             }
-            this.current = this.enumerator.Current;
-            return true;
+            this.IsFinished = true;
+            this.OnFinished?.Invoke(this);
+            return false;
+
+
         }
 
         /// <summary>

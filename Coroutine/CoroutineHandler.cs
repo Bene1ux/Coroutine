@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Coroutine {
@@ -16,12 +17,12 @@ namespace Coroutine {
         public static int EventCount => CoroutineHandler.Instance.EventCount;
 
         /// <inheritdoc cref="CoroutineHandlerInstance.Start(IEnumerable{Wait},string,int)"/>
-        public static ActiveCoroutine Start(IEnumerable<Wait> coroutine, string name = "", int priority = 0) {
+        public static ActiveCoroutine Start(IEnumerable coroutine, string name = "", int priority = 0) {
             return CoroutineHandler.Instance.Start(coroutine, name, priority);
         }
 
         /// <inheritdoc cref="CoroutineHandlerInstance.Start(IEnumerator{Wait},string,int)"/>
-        public static ActiveCoroutine Start(IEnumerator<Wait> coroutine, string name = "", int priority = 0) {
+        public static ActiveCoroutine Start(IEnumerator coroutine, string name = "", int priority = 0) {
             return CoroutineHandler.Instance.Start(coroutine, name, priority);
         }
 

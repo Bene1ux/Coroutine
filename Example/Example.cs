@@ -1,17 +1,25 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using Coroutine;
 
 namespace Example {
     internal static class Example {
 
         private static readonly Event TestEvent = new Event();
-
+        private static bool stop = false;
         public static void Main() {
-            var seconds = CoroutineHandler.Start(Example.WaitSeconds(), "Awesome Waiting Coroutine");
-            CoroutineHandler.Start(Example.PrintEvery10Seconds(seconds));
-
+            //var seconds = CoroutineHandler.Start(Example.WaitSeconds(), "Awesome Waiting Coroutine");
+            var seconds1 = CoroutineHandler.Start(SleepTest(), "asdf");
+            CoroutineHandler.InvokeLater(new Wait(8), () => {
+                Console.WriteLine("Raising test event");
+                stop= true;
+            });
+            /* CoroutineHandler.Start(Example.PrintEvery10Seconds(seconds));
+           
             CoroutineHandler.Start(Example.EmptyCoroutine());
 
             CoroutineHandler.InvokeLater(new Wait(5), () => {
@@ -22,7 +30,7 @@ namespace Example {
 
             CoroutineHandler.InvokeLater(new Wait(Example.TestEvent), () => Console.WriteLine("I am invoked after 'Example event received'"), priority: -5);
             CoroutineHandler.InvokeLater(new Wait(Example.TestEvent), () => Console.WriteLine("I am invoked before 'Example event received'"), priority: 2);
-
+*/
             var lastTime = DateTime.Now;
             while (true) {
                 var currTime = DateTime.Now;
@@ -30,6 +38,71 @@ namespace Example {
                 lastTime = currTime;
                 Thread.Sleep(1);
             }
+        }
+
+        private static IEnumerator SleepTest()
+        {
+            var random = new Random();
+
+            while (true)
+            {
+                yield return new Wait(1);
+                int delayMs = random.Next(1, 31);
+
+                Stopwatch stopwatch = Stopwatch.StartNew();
+                yield return new Wait(delayMs/1000f);
+             
+                stopwatch.Stop();
+
+                Console.WriteLine($"Delay: {stopwatch.ElapsedMilliseconds} / {delayMs} ms");
+            }
+           
+        }
+
+        private static IEnumerator SleepTest2()
+        {
+            var random = new Random();
+
+            while (true)
+            {
+                yield return new Wait(1);
+                int delayMs = random.Next(1, 31);
+
+                Stopwatch stopwatch = Stopwatch.StartNew();
+                while (stopwatch.ElapsedMilliseconds < delayMs)
+                {
+                  
+                }
+
+               
+                stopwatch.Stop();
+
+                Console.WriteLine($"Delay: {stopwatch.ElapsedMilliseconds} / {delayMs} ms");
+            }
+
+        }
+
+        private static IEnumerator Xdd0()
+        {
+           
+            Console.WriteLine($"xx1");
+            yield return new Wait(() => { return stop; });
+            Console.WriteLine($"xx2 {stop}");
+        }
+
+
+        private static IEnumerator Xdd1()
+        {
+            Console.WriteLine($"xx1");
+            yield return Xdd2();
+            Console.WriteLine($"xx4");
+        }
+
+        private static IEnumerator Xdd2()
+        {
+            Console.WriteLine($"xx2");
+            yield return new Wait(5);
+            Console.WriteLine($"xx3");
         }
 
         private static IEnumerator<Wait> WaitSeconds() {

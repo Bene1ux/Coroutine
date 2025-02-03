@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -45,7 +46,7 @@ namespace Coroutine {
         /// <param name="name">The <see cref="ActiveCoroutine.Name"/> that this coroutine should have. Defaults to an empty string.</param>
         /// <param name="priority">The <see cref="ActiveCoroutine.Priority"/> that this coroutine should have. The higher the priority, the earlier it is advanced. Defaults to 0.</param>
         /// <returns>An active coroutine object representing this coroutine</returns>
-        public ActiveCoroutine Start(IEnumerable<Wait> coroutine, string name = "", int priority = 0) {
+        public ActiveCoroutine Start(IEnumerable coroutine, string name = "", int priority = 0) {
             return this.Start(coroutine.GetEnumerator(), name, priority);
         }
 
@@ -56,7 +57,7 @@ namespace Coroutine {
         /// <param name="name">The <see cref="ActiveCoroutine.Name"/> that this coroutine should have. Defaults to an empty string.</param>
         /// <param name="priority">The <see cref="ActiveCoroutine.Priority"/> that this coroutine should have. The higher the priority, the earlier it is advanced compared to other coroutines that advance around the same time. Defaults to 0.</param>
         /// <returns>An active coroutine object representing this coroutine</returns>
-        public ActiveCoroutine Start(IEnumerator<Wait> coroutine, string name = "", int priority = 0) {
+        public ActiveCoroutine Start(IEnumerator coroutine, string name = "", int priority = 0) {
             var inst = new ActiveCoroutine(coroutine, name, priority, this.stopwatch);
             if (inst.MoveNext()) {
                 lock (this.lockObject)
