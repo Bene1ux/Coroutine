@@ -10,7 +10,7 @@ namespace Coroutine
     {
 
         internal readonly Event Event;
-        private double seconds;
+        private double waitMs;
         private Func<bool> condition;
         private bool doShortSpins;
         private double maxSpinTime = 20f / 1000;
@@ -22,24 +22,24 @@ namespace Coroutine
         public Wait(Event evt)
         {
             this.Event = evt;
-            this.seconds = 0;
+            this.waitMs = 0;
         }
 
         /// <summary>
-        /// Creates a new wait that waits for the given amount of seconds.
+        /// Creates a new wait that waits for the given amount of milliseconds.
         /// </summary>
-        /// <param name="seconds">The amount of seconds to wait for</param>
-        public Wait(double seconds, bool doSpins = false)
+        /// <param name="waitMs">The amount of milliseconds to wait for</param>
+        public Wait(double waitMs, bool doSpins = false)
         {
-            this.seconds = seconds;
+            this.waitMs = waitMs;
             this.Event = null;
             this.doShortSpins = doSpins;
         }
 
-        public Wait(Func<bool> condition, double seconds = 5)
+        public Wait(Func<bool> condition, double maxWaitMs = 5000)
         {
             this.condition = condition;
-            this.seconds = seconds;
+            this.waitMs = maxWaitMs;
             //this.doShortSpins = doSpins;
         }
 
@@ -48,13 +48,13 @@ namespace Coroutine
         /// Note that the exact value may be slightly different, since waits operate in <see cref="TimeSpan.TotalSeconds"/> rather than ticks.
         /// </summary>
         /// <param name="time">The time span to wait for</param>
-        public Wait(TimeSpan time) : this(time.TotalSeconds)
+        public Wait(TimeSpan time) : this(time.TotalMilliseconds)
         {
         }
 
-        private void Spin(double seconds)
+        private void Spin(double ms)
         {
-            var delayMs = seconds * 1000;
+            var delayMs = ms;
             Stopwatch stopwatch = Stopwatch.StartNew();
             while (stopwatch.ElapsedMilliseconds < delayMs)
             {
@@ -62,17 +62,17 @@ namespace Coroutine
             }
         }
 
-        internal bool Tick(double deltaSeconds)
+        internal bool Tick(double deltaMs)
         {
-            seconds -= deltaSeconds;
+            waitMs -= deltaMs;
             if (condition == null)
             {
-                if (doShortSpins && seconds <= maxSpinTime)
+                if (doShortSpins && waitMs <= maxSpinTime)
                 {
-                    Spin(seconds);
-                    seconds = 0;
+                    Spin(waitMs);
+                    waitMs = 0;
                 }
-                return seconds <= 0;
+                return waitMs <= 0;
             }
 
             if (condition())
@@ -92,7 +92,7 @@ namespace Coroutine
                 return true;
             }*/
 
-            return this.seconds <= 0;
+            return this.waitMs <= 0;
         }
 
     }

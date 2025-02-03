@@ -80,8 +80,8 @@ namespace Coroutine {
             return true;
         }
 
-        internal bool Tick(double deltaSeconds) {
-            if (!this.WasCanceled && this.current.Tick(deltaSeconds))
+        internal bool Tick(double deltaMs) {
+            if (!this.WasCanceled && this.current.Tick(deltaMs))
                 this.MoveNext();
             return this.IsFinished;
         }

@@ -95,12 +95,12 @@ namespace Coroutine {
         /// <summary>
         /// Ticks this coroutine handler, causing all time-based <see cref="Wait"/>s to be ticked.
         /// </summary>
-        /// <param name="deltaSeconds">The amount of seconds that have passed since the last time this method was invoked</param>
-        public void Tick(double deltaSeconds) {
+        /// <param name="deltaMs">The amount of seconds that have passed since the last time this method was invoked</param>
+        public void Tick(double deltaMs) {
             lock (this.lockObject) {
                 this.MoveOutstandingCoroutines(false);
                 this.tickingCoroutines.RemoveAll(c => {
-                    if (c.Tick(deltaSeconds)) {
+                    if (c.Tick(deltaMs)) {
                         return true;
                     } else if (c.IsWaitingForEvent) {
                         this.outstandingEventCoroutines.Add(c);
@@ -117,7 +117,7 @@ namespace Coroutine {
         /// </summary>
         /// <param name="delta">The time that has passed since the last time this method was invoked</param>
         public void Tick(TimeSpan delta) {
-            this.Tick(delta.TotalSeconds);
+            this.Tick(delta.TotalMilliseconds);
         }
 
         /// <summary>
