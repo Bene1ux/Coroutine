@@ -13,15 +13,17 @@ namespace Example
 
         private static readonly Event TestEvent = new Event();
         private static bool stop = false;
+        private static Stopwatch sw2;
+        private static DateTime t=DateTime.Now;
         public static void Main()
         {
             //var seconds = CoroutineHandler.Start(Example.WaitSeconds(), "Awesome Waiting Coroutine");
             var seconds1 = CoroutineHandler.Start(Xdd1(), "asdf");
-            CoroutineHandler.InvokeLater(new Wait(8000), () =>
+           /* CoroutineHandler.InvokeLater(new Wait(8000), () =>
             {
                 Console.WriteLine("Raising test event");
                 stop = true;
-            });
+            });*/
             /* CoroutineHandler.Start(Example.PrintEvery10Seconds(seconds));
            
             CoroutineHandler.Start(Example.EmptyCoroutine());
@@ -36,12 +38,15 @@ namespace Example
             CoroutineHandler.InvokeLater(new Wait(Example.TestEvent), () => Console.WriteLine("I am invoked before 'Example event received'"), priority: 2);
 */
             var lastTime = DateTime.Now;
+            var sw= Stopwatch.StartNew();
             while (true)
             {
                 var currTime = DateTime.Now;
-                CoroutineHandler.Tick(currTime - lastTime);
+                var delta= currTime - lastTime;
+                //Console.WriteLine($"Delta: {delta.TotalMilliseconds}, elapsed {sw.ElapsedMilliseconds}");
+                CoroutineHandler.Tick(delta);
                 lastTime = currTime;
-                Thread.Sleep(1);
+                Thread.Sleep(50);
             }
         }
 
@@ -59,7 +64,7 @@ namespace Example
 
                 stopwatch.Stop();
 
-                Console.WriteLine($"Delay: {stopwatch.ElapsedMilliseconds} / {delayMs} ms");
+                //Console.WriteLine($"Delay: {stopwatch.ElapsedMilliseconds} / {delayMs} ms");
             }
 
         }
@@ -98,16 +103,20 @@ namespace Example
 
         private static IEnumerator Xdd1()
         {
-            Console.WriteLine($"xx1");
-            yield return Xdd2();
-            Console.WriteLine($"xx4");
+            yield return new Wait(0);
+            sw2 = Stopwatch.StartNew();
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            Console.WriteLine($"xx0 {stopwatch.ElapsedMilliseconds} / {(DateTime.Now-t).TotalMilliseconds}");
+            Console.WriteLine($"xx1 {stopwatch.ElapsedMilliseconds} / {(DateTime.Now - t).TotalMilliseconds}");
+            yield return Xdd2(stopwatch);
+            Console.WriteLine($"xx4 {stopwatch.ElapsedMilliseconds} / {(DateTime.Now - t).TotalMilliseconds}");
         }
 
-        private static IEnumerator Xdd2()
+        private static IEnumerator Xdd2(Stopwatch stopwatch)
         {
-            Console.WriteLine($"xx2");
-            yield return new Wait(5000);
-            Console.WriteLine($"xx3");
+            Console.WriteLine($"xx2 {stopwatch.ElapsedMilliseconds} / {(DateTime.Now - t).TotalMilliseconds}");
+            yield return new Wait(20);
+            Console.WriteLine($"xx3 {stopwatch.ElapsedMilliseconds} / {(DateTime.Now - t).TotalMilliseconds}");
         }
 
         private static IEnumerator<Wait> WaitSeconds()

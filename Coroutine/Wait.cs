@@ -8,12 +8,13 @@ namespace Coroutine
     /// </summary>
     public class Wait
     {
-
         internal readonly Event Event;
         private double waitMs;
+        private double initialWaitMs;
         private Func<bool> condition;
         private bool doShortSpins;
-        private double maxSpinTime = 20f / 1000;
+        private bool spinOnce;
+        private double maxSpinTime = 40;
 
         /// <summary>
         /// Creates a new wait that waits for the given <see cref="Coroutine.Event"/>.
@@ -25,21 +26,35 @@ namespace Coroutine
             this.waitMs = 0;
         }
 
+        public bool CanSpin()
+        {
+            return false;
+           // return doShortSpins&&initialWaitMs <= maxSpinTime;
+        }
+
+        public void SetSpinOnce()
+        {
+            spinOnce = true;
+        }
+
         /// <summary>
         /// Creates a new wait that waits for the given amount of milliseconds.
         /// </summary>
         /// <param name="waitMs">The amount of milliseconds to wait for</param>
-        public Wait(double waitMs, bool doSpins = false)
+        public Wait(double waitMs, bool doSpins = true, int maxSpinTimeMs=40)
         {
             this.waitMs = waitMs;
             this.Event = null;
+            this.initialWaitMs = waitMs;
             this.doShortSpins = doSpins;
+            this.maxSpinTime = maxSpinTimeMs;
         }
 
         public Wait(Func<bool> condition, double maxWaitMs = 5000)
         {
             this.condition = condition;
             this.waitMs = maxWaitMs;
+            this.initialWaitMs = waitMs;
             //this.doShortSpins = doSpins;
         }
 
@@ -58,7 +73,6 @@ namespace Coroutine
             Stopwatch stopwatch = Stopwatch.StartNew();
             while (stopwatch.ElapsedMilliseconds < delayMs)
             {
-
             }
         }
 
@@ -67,33 +81,35 @@ namespace Coroutine
             waitMs -= deltaMs;
             if (condition == null)
             {
-                if (doShortSpins && waitMs <= maxSpinTime)
+                if (!spinOnce)
                 {
-                    Spin(waitMs);
-                    waitMs = 0;
+                    return waitMs <= 0;
                 }
-                return waitMs <= 0;
+
+                Spin(waitMs);
+                spinOnce = false;
+                waitMs = 0;
+
+                return true;
             }
 
             if (condition())
             {
-
                 return true;
             }
 
-          /*  if (doShortSpins && seconds <= maxSpinTime)
-            {
-                Spin(seconds);
-            }
+            /*  if (doShortSpins && seconds <= maxSpinTime)
+              {
+                  Spin(seconds);
+              }
 
-            if (condition())
-            {
+              if (condition())
+              {
 
-                return true;
-            }*/
+                  return true;
+              }*/
 
             return this.waitMs <= 0;
         }
-
     }
 }
